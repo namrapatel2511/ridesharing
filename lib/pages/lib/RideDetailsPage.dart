@@ -1,55 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
+import 'package:google_maps_webservice/places.dart';
 
 class RideDetailsPage extends StatelessWidget {
   final String rideId;
 
   RideDetailsPage(this.rideId);
 
-  Future<void> _showJoinDialog(BuildContext context) async {
+  TextEditingController seatsController = TextEditingController();
+
+  Future<void> _showJoinDialog(
+      BuildContext context, Map<String, dynamic> rideData) async {
     String pickupStand = '';
-    int seatsAvailable = 0;
+
+    final controller = TextEditingController();
+    final places =
+        GoogleMapsPlaces(apiKey: 'AIzaSyCM8fWUE5pRL0qC4I83fJGebRnP3tdVPpQ');
 
     await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Join Ride'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  decoration: InputDecoration(labelText: 'Pickup Stand'),
-                  onChanged: (value) {
-                    pickupStand = value;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Join Ride'),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    PlacesAutocompleteField(
+                      apiKey: 'AIzaSyCM8fWUE5pRL0qC4I83fJGebRnP3tdVPpQ',
+                      controller: controller,
+                      inputDecoration:
+                          InputDecoration(labelText: 'Pickup Stand'),
+                      onChanged: (value) async {
+                        final predictions = await places.autocomplete(
+                          value,
+                          language: "en",
+                          types: ["address"],
+                        );
+                      },
+                    ),
+                    TextField(
+                      controller: seatsController,
+                      decoration: InputDecoration(labelText: 'Seats Required'),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        // Ensure non-negative integer input
+                        if (int.tryParse(value) != null &&
+                            int.parse(value) >= 0) {
+                          seatsController.text = value;
+                        } /*else {
+                          seatsController.text = '0';
+                        }*/
+                      },
+                    ),
+                    if (seatsController.text.isNotEmpty &&
+                        int.parse(seatsController.text) >
+                            rideData['selectedSeats'])
+                      Text(
+                        'Not enough seats available!',
+                        style: TextStyle(
+                          color: Colors.red,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Seats Available'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    seatsAvailable = int.tryParse(value) ?? 0;
+                TextButton(
+                  child: Text('Join'),
+                  onPressed: () {
+                    final pickupStand = controller.text;
+                    if (seatsController.text.isNotEmpty &&
+                        int.parse(seatsController.text) >
+                            rideData['selectedSeats']) {
+                      // Show an error message if entered seats are greater
+                      setState(() {});
+                    } else if (pickupStand.isEmpty) {
+                      // Show an error message if pickup stand is empty
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter a pickup location!'),
+                        ),
+                      );
+                    } else {
+                      print(
+                        'Joining ride with Pickup Stand: $pickupStand and Seats Required: ${seatsController.text}',
+                      );
+                      Navigator.of(context).pop();
+                    }
                   },
                 ),
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Join'),
-              onPressed: () {
-                print(
-                    'Joining ride with Pickup Stand: $pickupStand and Seats Available: $seatsAvailable');
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -202,7 +253,7 @@ class RideDetailsPage extends StatelessWidget {
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    _showJoinDialog(context);
+                    _showJoinDialog(context, rideData);
                   },
                   style: ElevatedButton.styleFrom(
                     primary: Colors.deepPurpleAccent,
