@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'lib/RideDetailsPage.dart';
+import 'RideDetailsPage.dart';
 
 class BrowseRidesPage extends StatelessWidget {
   @override
@@ -32,6 +33,8 @@ class BrowseRidesPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final ride = rides[index].data() as Map<String, dynamic>;
               final rideId = rides[index].id;
+              final user = FirebaseAuth.instance.currentUser;
+              String currentUserId = user!.uid;
 
               final dateStr = ride['date'];
               final currentDate = DateTime.now();
@@ -88,7 +91,8 @@ class BrowseRidesPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RideDetailsPage(rideId),
+                          builder: (context) =>
+                              RideDetailsPage(rideId, currentUserId),
                         ),
                       );
                     },

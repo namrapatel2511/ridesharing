@@ -5,18 +5,31 @@ import 'package:google_maps_webservice/places.dart';
 
 class RideDetailsPage extends StatelessWidget {
   final String rideId;
+  final String currentUserId; // Add current user's ID
 
-  RideDetailsPage(this.rideId);
+  RideDetailsPage(this.rideId, this.currentUserId);
 
   TextEditingController seatsController = TextEditingController();
 
   Future<void> _showJoinDialog(
-      BuildContext context, Map<String, dynamic> rideData) async {
+    BuildContext context,
+    Map<String, dynamic> rideData,
+  ) async {
     String pickupStand = '';
 
     final controller = TextEditingController();
-    final places =
-        GoogleMapsPlaces(apiKey: 'AIzaSyCM8fWUE5pRL0qC4I83fJGebRnP3tdVPpQ');
+    final places = GoogleMapsPlaces(apiKey: 'YOUR_GOOGLE_MAPS_API_KEY');
+
+    // Check if the current user is the creator
+    if (currentUserId == rideData['creatorUID']) {
+      // Show a message that the creator can't join their own ride
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("You can't join your own ride."),
+        ),
+      );
+      return;
+    }
 
     await showDialog(
       context: context,
@@ -29,7 +42,7 @@ class RideDetailsPage extends StatelessWidget {
                 child: Column(
                   children: [
                     PlacesAutocompleteField(
-                      apiKey: 'AIzaSyCM8fWUE5pRL0qC4I83fJGebRnP3tdVPpQ',
+                      apiKey: 'YOUR_GOOGLE_MAPS_API_KEY',
                       controller: controller,
                       inputDecoration:
                           InputDecoration(labelText: 'Pickup Stand'),
@@ -50,9 +63,7 @@ class RideDetailsPage extends StatelessWidget {
                         if (int.tryParse(value) != null &&
                             int.parse(value) >= 0) {
                           seatsController.text = value;
-                        } /*else {
-                          seatsController.text = '0';
-                        }*/
+                        }
                       },
                     ),
                     if (seatsController.text.isNotEmpty &&
@@ -130,7 +141,6 @@ class RideDetailsPage extends StatelessWidget {
           }
 
           final rideData = snapshot.data!.data() as Map<String, dynamic>;
-          final creatorUID = rideData['creatorUID'] as String;
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(16.0),
@@ -223,7 +233,7 @@ class RideDetailsPage extends StatelessWidget {
                 FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('profiles')
-                      .doc(creatorUID)
+                      .doc(rideData['creatorUID'])
                       .get(),
                   builder: (context, profileSnapshot) {
                     if (profileSnapshot.hasError) {
