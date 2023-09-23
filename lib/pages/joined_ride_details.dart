@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 
 class PassengerRideDetailsPage extends StatelessWidget {
   final String rideId;
@@ -23,3 +23,4 @@ class PassengerRideDetailsPage extends StatelessWidget {
     );
   }
 }
+*/

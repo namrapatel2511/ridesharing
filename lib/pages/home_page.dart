@@ -118,16 +118,18 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /* void _navigateToCreatedRideDetailsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            DriverRideDetailsPage (), // Replace with your CreatedRideDetailsPage
-      ),
-    );
+  void _navigateToCreatedRideDetailsPage(BuildContext context) {
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DriverRideDetailsPage(user!.uid),
+        ),
+      );
+    }
   }
 
+/*
   void _navigateToJoinedRideDetailsPage(BuildContext context) {
     Navigator.push(
       context,
@@ -169,11 +171,11 @@ class HomePage extends StatelessWidget {
               child: Text("Join Ride"),
             ),
             SizedBox(height: 20.0),
-            /* ElevatedButton(
+            ElevatedButton(
               onPressed: () => _navigateToCreatedRideDetailsPage(
                   context), // Added button for Created Ride Details
               child: Text("Created Ride Details"),
-            ),
+            ), /*
             SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () => _navigateToJoinedRideDetailsPage(
