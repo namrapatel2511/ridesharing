@@ -39,7 +39,7 @@ class _HomeState extends State<Home> {
   TextEditingController endLocationController = TextEditingController();
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
-  double selectedSeats = 1; // Default value
+  double selectedSeats = 1;
 
   LatLng startLocation = const LatLng(0, 0);
   LatLng endLocation = const LatLng(0, 0);
