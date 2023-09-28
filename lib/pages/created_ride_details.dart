@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ridesharing/DetailPage.dart';
-import 'package:intl/intl.dart'; // Add this import
+import 'package:intl/intl.dart';
 
 class DriverRideDetailsPage extends StatelessWidget {
   final String currentUserId;
@@ -11,7 +11,6 @@ class DriverRideDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fetch and display all rides created by the user
     Stream<QuerySnapshot> getRidesStream() {
       return FirebaseFirestore.instance
           .collection('rides')
@@ -48,7 +47,6 @@ class DriverRideDetailsPage extends StatelessWidget {
               final rideId = ride.id;
               final rideData = ride.data() as Map<String, dynamic>;
 
-              // Convert the date string to a DateTime object
               final dateStr = rideData['date'] as String;
               final rideDate = DateTime.parse(dateStr);
 
@@ -94,8 +92,7 @@ class DriverRideDetailsPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            DateFormat('yyyy-MM-dd ')
-                                .format(rideDate), // Format the date as needed
+                            DateFormat('yyyy-MM-dd ').format(rideDate),
                           ),
                         ],
                       ),
@@ -105,8 +102,7 @@ class DriverRideDetailsPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            DetailPage(rideId, user!.uid), // Pass user.uid
+                        builder: (context) => DetailPage(rideId, user!.uid),
                       ),
                     );
                   },

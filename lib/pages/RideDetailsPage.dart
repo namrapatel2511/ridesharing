@@ -618,6 +618,7 @@ class RideDetailsPage extends StatelessWidget {
 }
 */
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
@@ -625,7 +626,7 @@ import 'package:google_maps_webservice/places.dart';
 
 class RideDetailsPage extends StatelessWidget {
   final String rideId;
-  final String currentUserId; // Add current user's ID
+  final String currentUserId;
 
   RideDetailsPage(this.rideId, this.currentUserId);
 
@@ -641,9 +642,7 @@ class RideDetailsPage extends StatelessWidget {
     final places =
         GoogleMapsPlaces(apiKey: 'AIzaSyCM8fWUE5pRL0qC4I83fJGebRnP3tdVPpQ');
 
-    // Check if the current user is the creator
     if (currentUserId == rideData['creatorUID']) {
-      // Show a message that the creator can't join their own ride
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("You can't join your own ride."),
@@ -681,7 +680,6 @@ class RideDetailsPage extends StatelessWidget {
                           const InputDecoration(labelText: 'Seats Required'),
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        // Ensure non-negative integer input
                         if (int.tryParse(value) != null &&
                             int.parse(value) >= 0) {
                           seatsController.text = value;
@@ -708,42 +706,58 @@ class RideDetailsPage extends StatelessWidget {
                   },
                 ),
                 TextButton(
-                  child: const Text('Request'),
-                  onPressed: () async {
-                    final pickupStand = controller.text;
-                    if (seatsController.text.isNotEmpty &&
-                        int.parse(seatsController.text) >
-                            rideData['selectedSeats']) {
-                      // Show an error message if entered seats are greater
-                      setState(() {});
-                    } else if (pickupStand.isEmpty) {
-                      // Show an error message if pickup stand is empty
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a pickup location!'),
-                        ),
-                      );
-                    } else {
-                      // Add the ride request to the "riderequest" collection
-                      await FirebaseFirestore.instance
-                          .collection('riderequest')
-                          .add({
-                        'rideId': rideId,
-                        'requesterName':
-                            'User Name', // Replace with actual user name
-                        'pickupStand': pickupStand,
-                        'seatsRequired': int.parse(seatsController.text),
-                        'status':
-                            'pending', // You can set an initial status here
-                      });
+                    child: const Text('Request'),
+                    onPressed: () async {
+                      final pickupStand = controller.text;
 
-                      print(
-                        'Joining ride with Pickup Stand: $pickupStand and Seats Required: ${seatsController.text}',
-                      );
-                      Navigator.of(context).pop();
-                    }
-                  },
-                ),
+                      if (seatsController.text.isNotEmpty &&
+                          int.parse(seatsController.text) >
+                              rideData['selectedSeats']) {
+                        setState(() {});
+                      } else if (pickupStand.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a pickup location!'),
+                          ),
+                        );
+                      } else {
+                        final rideRequestDocRef = await FirebaseFirestore
+                            .instance
+                            .collection('riderequest')
+                            .add({
+                          'rideId': rideId,
+                          'requesterName': 'User Name',
+                          'pickupStand': pickupStand,
+                          'seatsRequired': int.parse(seatsController.text),
+                          'status': 'pending',
+                        });
+
+                        final rideCreatorUid = rideData['creatorUID'];
+                        final fcmTokenDoc = await FirebaseFirestore.instance
+                            .collection('fcmToken')
+                            .doc(rideCreatorUid)
+                            .get();
+
+                        if (fcmTokenDoc.exists) {
+                          final fcmToken = fcmTokenDoc['token'];
+
+                          final messaging = FirebaseMessaging.instance;
+                          await messaging.sendMessage(
+                            to: fcmToken,
+                            data: {
+                              'title': 'New Ride Request',
+                              'body':
+                                  'You have a new ride request from ${'User Name'}!',
+                              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                            },
+                          );
+                        }
+
+                        print(
+                            'Joining ride with Pickup Stand: $pickupStand and Seats Required: ${seatsController.text}');
+                        Navigator.of(context).pop();
+                      }
+                    }),
               ],
             );
           },
@@ -920,7 +934,6 @@ class RideDetailsPage extends StatelessWidget {
               );
             },
           ),
-          // Add the StreamBuilder for displaying ride requests here
         ],
       ),
     );

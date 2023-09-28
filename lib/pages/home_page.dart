@@ -172,8 +172,7 @@ class HomePage extends StatelessWidget {
             ),
             SizedBox(height: 20.0),
             ElevatedButton(
-              onPressed: () => _navigateToCreatedRideDetailsPage(
-                  context), // Added button for Created Ride Details
+              onPressed: () => _navigateToCreatedRideDetailsPage(context),
               child: Text("Created Ride Details"),
             ), /*
             SizedBox(height: 20.0),
