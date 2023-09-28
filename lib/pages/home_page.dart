@@ -81,8 +81,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_page.dart';
 import 'create_ride.dart';
 import 'browse_rides.dart';
-import 'created_ride_details.dart'; // Import your CreatedRideDetailsPage
-import 'joined_ride_details.dart'; // Import your JoinedRideDetailsPage
+import 'created_ride_details.dart';
+import 'joined_ride_details.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
