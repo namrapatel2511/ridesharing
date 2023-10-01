@@ -361,6 +361,8 @@ class DetailPage extends StatelessWidget {
   }
 }
 */
+
+/*
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -469,6 +471,201 @@ class DetailPage extends StatelessWidget {
                       children: [
                         StreamBuilder<QuerySnapshot>(
                           stream: rideRequestsCollectionRef
+                              .where('status', isNotEqualTo: 'rejected')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            }
+
+                            if (!snapshot.hasData ||
+                                snapshot.data!.docs.isEmpty) {
+                              return ListTile(
+                                title: Text('No ride requests received.'),
+                              );
+                            }
+
+                            final requests = snapshot.data!.docs;
+
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: requests.length,
+                              itemBuilder: (context, index) {
+                                final request = requests[index].data()
+                                    as Map<String, dynamic>;
+                                final requestId = requests[index].id;
+
+                                final requesterName =
+                                    request['requesterName'] ?? 'Unknown User';
+                                final pickupStand =
+                                    request['pickupStand'] ?? '';
+                                final seatsRequired =
+                                    request['seatsRequired'] ?? 0;
+
+                                final requestStatus = request['status'];
+
+                                return Card(
+                                  elevation: 2,
+                                  margin: EdgeInsets.symmetric(vertical: 8),
+                                  child: ListTile(
+                                    title: Text('Requester: $requesterName'),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Pickup Stand: $pickupStand'),
+                                        Text('Seats Required: $seatsRequired'),
+                                      ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (requestStatus != 'accepted')
+                                          IconButton(
+                                            icon: Icon(Icons.check),
+                                            onPressed: () async {
+                                              final requestDoc =
+                                                  rideRequestsCollectionRef
+                                                      .doc(requestId);
+                                              await requestDoc.update(
+                                                  {'status': 'accepted'});
+
+                                              final currentUsersJoined =
+                                                  rideData['usersJoined'] ?? 0;
+                                              final updatedSeatsOccupied =
+                                                  seatsOccupied + seatsRequired;
+                                              final updatedAvailableSeats =
+                                                  availableSeats -
+                                                      seatsRequired;
+
+                                              await rideDocRef.update({
+                                                'usersJoined':
+                                                    currentUsersJoined + 1,
+                                                'seatsOccupied':
+                                                    updatedSeatsOccupied,
+                                                'selectedSeats':
+                                                    updatedAvailableSeats,
+                                              });
+                                            },
+                                          ),
+                                        IconButton(
+                                          icon: Icon(Icons.close),
+                                          onPressed: () async {
+                                            final requestDoc =
+                                                rideRequestsCollectionRef
+                                                    .doc(requestId);
+                                            await requestDoc
+                                                .update({'status': 'rejected'});
+
+                                            final updatedSeatsOccupied =
+                                                seatsOccupied - seatsRequired;
+                                            final updatedAvailableSeats =
+                                                availableSeats + seatsRequired;
+
+                                            await rideDocRef.update({
+                                              'seatsOccupied':
+                                                  updatedSeatsOccupied,
+                                              'selectedSeats':
+                                                  updatedAvailableSeats,
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+*/
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class DetailPage extends StatelessWidget {
+  final String rideId;
+  final String currentUserId;
+
+  DetailPage(this.rideId, this.currentUserId);
+
+  @override
+  Widget build(BuildContext context) {
+    final rideDocRef =
+        FirebaseFirestore.instance.collection('rides').doc(rideId);
+    final participantsCollectionRef = rideDocRef.collection('participants');
+    final rideRequestsCollectionRef =
+        FirebaseFirestore.instance.collection('riderequest');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Ride Details (Creator)'),
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: rideDocRef.snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData) {
+            return Center(child: Text('Ride details not found.'));
+          }
+
+          final rideData = snapshot.data!.data() as Map<String, dynamic>;
+          final startLocation = rideData['startLocation'] ?? '';
+          final endLocation = rideData['endLocation'] ?? '';
+          final date = rideData['date'] ?? '';
+          final time = rideData['time'] ?? '';
+          final availableSeats = rideData['selectedSeats'] ?? 0;
+          final seatsOccupied = rideData['seatsOccupied'] ?? 0;
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Card(
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Ride Details'),
+                          SizedBox(height: 16),
+                          Text('Start Location: $startLocation'),
+                          Text('End Location: $endLocation'),
+                          Text('Date: $date'),
+                          Text('Time: $time'),
+                          Text('Available Seats: $availableSeats'),
+                          // ... (rest of the ride details)
+                        ],
+                      ),
+                    ),
+                  ),
+                  Card(
+                    elevation: 4,
+                    child: ExpansionTile(
+                      title: Text('Ride Requests'),
+                      initiallyExpanded: false,
+                      children: [
+                        StreamBuilder<QuerySnapshot>(
+                          stream: rideRequestsCollectionRef
+                              .where('rideId',
+                                  isEqualTo: rideId) // Filter by rideId
                               .where('status', isNotEqualTo: 'rejected')
                               .snapshots(),
                           builder: (context, snapshot) {

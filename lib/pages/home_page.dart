@@ -78,11 +78,11 @@ class HomePage extends StatelessWidget {
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ridesharing/pages/user_requested_rides.dart';
 import 'profile_page.dart';
 import 'create_ride.dart';
 import 'browse_rides.dart';
 import 'created_ride_details.dart';
-import 'joined_ride_details.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
@@ -140,6 +140,15 @@ class HomePage extends StatelessWidget {
     );
   }*/
 
+  void _navigateToUserRequestedRidesPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserRequestedRidesPage(user!.uid),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,13 +183,13 @@ class HomePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _navigateToCreatedRideDetailsPage(context),
               child: Text("Created Ride Details"),
-            ), /*
+            ),
             SizedBox(height: 20.0),
             ElevatedButton(
-              onPressed: () => _navigateToJoinedRideDetailsPage(
-                  context), // Added button for Joined Ride Details
-              child: Text("Joined Ride Details"),
-            ),*/
+              onPressed: () => _navigateToUserRequestedRidesPage(
+                  context), // Added button for User Requested Rides
+              child: Text("User Requested Rides"),
+            ),
           ],
         ),
       ),
