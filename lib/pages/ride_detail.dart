@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class DetailedRidePage extends StatelessWidget {
+class DetailedRidePage extends StatefulWidget {
   final String rideId;
   final String status;
 
   DetailedRidePage(this.rideId, this.status);
 
   @override
+  _DetailedRidePageState createState() => _DetailedRidePageState();
+}
+
+class _DetailedRidePageState extends State<DetailedRidePage> {
+  GoogleMapController? _controller;
+
+  @override
   Widget build(BuildContext context) {
-    // Retrieve ride details and display them along with the status
-    // You can use the rideId to fetch ride details from Firestore
-    // and display them on this page.
     return Scaffold(
       appBar: AppBar(
         title: Text('Detailed Ride'),
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future:
-            FirebaseFirestore.instance.collection('rides').doc(rideId).get(),
+        future: FirebaseFirestore.instance
+            .collection('rides')
+            .doc(widget.rideId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -30,22 +37,52 @@ class DetailedRidePage extends StatelessWidget {
 
           final rideData = snapshot.data!.data() as Map<String, dynamic>;
 
-          // Display ride details and status here
-          // You can use the `status` variable to show whether the ride is accepted, rejected, or pending.
+          final liveLocationData = rideData['liveLocation'];
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
               children: [
-                // Display ride details here
-                // For example, rideData['startLocation'], rideData['endLocation'], etc.
-
-                Text('Status: $status'), // Display the status
+                Text('Status: ${widget.status}'),
+                SizedBox(height: 16),
+                Container(
+                  height: 300,
+                  child: GoogleMap(
+                    onMapCreated: (controller) {
+                      setState(() {
+                        _controller = controller;
+                      });
+                    },
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(0, 0), // Initial position
+                      zoom: 12,
+                    ),
+                    markers: _buildMarkers(liveLocationData),
+                  ),
+                ),
               ],
             ),
           );
         },
       ),
     );
+  }
+
+  // Build map markers from live location data
+  Set<Marker> _buildMarkers(Map<String, dynamic> liveLocationData) {
+    // Implement logic to convert live location data to markers
+    // Example:
+    final markers = <Marker>{};
+    liveLocationData.forEach((userId, location) {
+      final lat = location['latitude'] as double;
+      final lng = location['longitude'] as double;
+      final marker = Marker(
+        markerId: MarkerId(userId),
+        position: LatLng(lat, lng),
+        // Add other marker properties as needed
+      );
+      markers.add(marker);
+    });
+    return markers;
   }
 }
